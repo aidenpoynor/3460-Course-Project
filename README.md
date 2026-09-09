@@ -3,7 +3,7 @@
 ## Project Topic
 
 **System Observability Monitor** — a cross-platform utility that collects and reports
-system-level metrics (CPU, memory, disk, and process activity) so a user can observe the
+system-level metrics (CPU, memory, and process activity) so a user can observe the
 health of the machine it runs on.
 
 ## Team Members
