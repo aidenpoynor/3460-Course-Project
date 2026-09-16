@@ -1,6 +1,13 @@
-#include <iostream>
+#include "MemoryCollector.h"
+#include "ProcessCollector.h"
+#include "Reporter.h"
+#include "SystemSnapshot.h"
 
 int main() {
-    std::cout << "Hello, World!\n";
+    SystemSnapshot snapshot;
+    snapshot.memory = MemoryCollector().collect();
+    snapshot.processes = ProcessCollector().collect();
+
+    Reporter().print(snapshot);
     return 0;
 }
