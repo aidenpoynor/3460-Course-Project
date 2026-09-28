@@ -39,7 +39,7 @@ Run instructions differ by platform because of where each toolchain places the e
 **Linux**
 
 ```bash
-./build/HelloWorld
+./build/SystemMonitor
 ```
 
 **Windows**
@@ -47,11 +47,11 @@ Run instructions differ by platform because of where each toolchain places the e
 MSVC builds into a configuration subdirectory, so run:
 
 ```bash
-./build/Release/HelloWorld.exe
+./build/Release/SystemMonitor.exe
 ```
 
 From the Windows Command Prompt or PowerShell, use backslashes instead:
 
 ```
-build\Release\HelloWorld.exe
+build\Release\SystemMonitor.exe
 ```
