@@ -1,0 +1,27 @@
+name: Custom Build Script and Run
+
+on:
+  push:
+    branches: [ "main", "test-workflow" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-run:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out repository code
+      uses: actions/checkout@v4
+
+    - name: Make build script executable
+      # This ensures GitHub's Linux machine has permission to run your script
+      run: chmod +x ./build.sh
+
+    - name: Run Build Script
+      # This executes your custom shell script
+      run: ./build.sh
+
+    - name: Run System Monitor
+      # Change 'my_system_monitor' to match your actual executable name and path
+      run: ./build/SytemMonitor
