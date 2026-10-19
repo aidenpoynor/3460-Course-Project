@@ -55,3 +55,32 @@ From the Windows Command Prompt or PowerShell, use backslashes instead:
 ```
 build\Release\SystemMonitor.exe
 ```
+
+### Options
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `--interval <ms>` | `1000` | Time between refreshes, in milliseconds. Must be a positive integer. |
+| `--top <N>` | `10` | Number of process rows to display. Must be a positive integer. |
+| `--sort cpu\|mem` | `cpu` | Sort processes by CPU% or resident memory, both descending. |
+| `-h`, `--help` | | Show usage. |
+
+```bash
+./build/SystemMonitor --interval 2000 --top 5 --sort mem
+```
+
+Press `Ctrl+C` to stop. The program refreshes until interrupted.
+
+### Output
+
+The first snapshot is a baseline only. CPU% values need two samples, so the first
+report appears after one interval. Unavailable values print as `--`:
+
+- Overall CPU% is unavailable when the counters cannot produce a valid delta.
+- Process CPU% is unavailable for newly started processes and for processes without
+  a matching baseline.
+- Process RSS (`VmRSS`) is unavailable for processes that do not report it, such as
+  kernel threads.
+
+CPU% for a process can exceed 100% when it uses multiple cores. Overall CPU% is
+measured against total system capacity.

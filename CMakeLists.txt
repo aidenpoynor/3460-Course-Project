@@ -7,7 +7,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_executable(SystemMonitor
     src/main.cpp
     src/MemoryCollector.cpp
+    src/CpuCollector.cpp
     src/ProcessCollector.cpp
+    src/Metrics.cpp
     src/Reporter.cpp
 )
 
