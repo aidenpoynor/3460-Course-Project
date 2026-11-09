@@ -24,8 +24,8 @@ The monitor already works, but most of it is free functions that read `/proc` di
 
 | Class | Responsibility |
 | --- | --- |
-| `ISystemSource` | Interface for getting raw system data (meminfo text, stat text, process list). |
-| `ProcFsSource` | Real Linux version that reads from `/proc`. |
+| `SystemSource` | Interface for getting raw system data (meminfo text, stat text, process list). |
+| `ProcSource` | Linux implementation of SystemSource that reads from `/proc`. |
 | `SnapshotCollector` | Uses a source to parse the data and build a `SystemSnapshot` (R1, R2, R3, R9). |
 | `MetricsCalculator` | Computes overall and per-process CPU% from two snapshots (R4, R5). |
 | `ProcessRanker` | Sorts and trims the process list (R6). |
@@ -35,8 +35,8 @@ The monitor already works, but most of it is free functions that read `/proc` di
 
 ### Relationships
 
-- `ProcFsSource` inherits from `ISystemSource`. In tests, a `FakeSystemSource` will also implement it.
-- `SnapshotCollector` uses an `ISystemSource&` that it doesn't own.
+- `ProcSource` inherits from `SystemSource`. In tests, a `FakeSystemSource` will also implement it.
+- `SnapshotCollector` uses an `SystemSource&` that it doesn't own.
 - `Monitor` uses the collector, calculator, and reporter, and owns its `ProcessRanker`.
 - `main()` creates everything and passes it into `Monitor`.
 
@@ -44,19 +44,19 @@ The monitor already works, but most of it is free functions that read `/proc` di
 classDiagram
     direction LR
 
-    class ISystemSource {
+    class SystemSource {
         <<interface>>
         +readMemInfo() optional~string~
         +readCpuStat() optional~string~
         +readProcesses() vector~RawProcess~
         +ticksPerSecond() long
     }
-    class ProcFsSource
+    class ProcSource
     class FakeSystemSource {
         <<test only>>
     }
-    ISystemSource <|.. ProcFsSource
-    ISystemSource <|.. FakeSystemSource
+    SystemSource <|.. ProcSource
+    SystemSource <|.. FakeSystemSource
 
     class SnapshotCollector {
         +collect() SystemSnapshot
@@ -81,7 +81,7 @@ classDiagram
         +run(running)
     }
 
-    SnapshotCollector --> ISystemSource : uses
+    SnapshotCollector --> SystemSource : uses
     Monitor o-- SnapshotCollector
     Monitor o-- MetricsCalculator
     Monitor *-- ProcessRanker
@@ -92,9 +92,9 @@ classDiagram
 ### Key declarations
 
 ```cpp
-class ISystemSource {
+class SystemSource {
 public:
-    virtual ~ISystemSource() = default;
+    virtual ~SystemSource() = default;
     virtual std::optional<std::string> readMemInfo() = 0;
     virtual std::optional<std::string> readCpuStat() = 0;
     virtual std::vector<RawProcess> readProcesses() = 0;  // comm, stat, status text
@@ -103,10 +103,10 @@ public:
 
 class SnapshotCollector {
 public:
-    explicit SnapshotCollector(ISystemSource& source);
+    explicit SnapshotCollector(SystemSource& source);
     SystemSnapshot collect();  // throws std::runtime_error on R9 failures
 private:
-    ISystemSource& source_;
+    SystemSource& source_;
 };
 
 class MetricsCalculator {
@@ -135,13 +135,13 @@ private:
 
 ### How it works
 
-`main()` parses the args with `ArgParser`, creates a `ProcFsSource`, and passes it into a `SnapshotCollector`. It then builds the `Monitor` and calls `run()`. Each `step()` collects a new snapshot, has `MetricsCalculator` compare it to the previous one, gives the process list to `ProcessRanker`, and sends the result to `Reporter`. The new snapshot then becomes the baseline. If collection throws, `main()` catches it, prints the error, and returns 1.
+`main()` parses the args with `ArgParser`, creates a `ProcSource`, and passes it into a `SnapshotCollector`. It then builds the `Monitor` and calls `run()`. Each `step()` collects a new snapshot, has `MetricsCalculator` compare it to the previous one, gives the process list to `ProcessRanker`, and sends the result to `Reporter`. The new snapshot then becomes the baseline. If collection throws, `main()` catches it, prints the error, and returns 1.
 
 ```mermaid
 sequenceDiagram
     participant M as Monitor
     participant SC as SnapshotCollector
-    participant Src as ISystemSource
+    participant Src as SystemSource
     participant MC as MetricsCalculator
     participant R as ProcessRanker
     participant Rep as Reporter
@@ -163,7 +163,7 @@ A couple of small changes make testing easier. `ArgParser` takes a `vector<strin
 
 **Problem:** The collectors read hard-coded `/proc` paths, so we can't test them with known input or force edge cases like a reused PID. OS calls are also spread across files (`Metrics.cpp` includes `<unistd.h>`), which would break the Windows build in `build.sh`.
 
-**Pattern:** `ISystemSource` is the strategy interface. `ProcFsSource` and `FakeSystemSource` are the concrete strategies, and `SnapshotCollector` uses whichever one it's given.
+**Pattern:** `SystemSource` is the strategy interface. `ProcSource` and `FakeSystemSource` are the concrete strategies, and `SnapshotCollector` uses whichever one it's given.
 
 **Improvement:** Collection and metrics can be tested with exact input, and all the Linux-specific code lives in one class. Adding Windows support later would just mean writing a new source class.
 
