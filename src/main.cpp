@@ -4,7 +4,6 @@
 #include "ProcessCollector.h"
 #include "Reporter.h"
 #include "SystemSnapshot.h"
-#include <atomic>
 #include <chrono>
 #include <csignal>
 #include <exception>
@@ -15,10 +14,10 @@
 
 namespace {
 
-std::atomic<bool> running{true};
+volatile std::sig_atomic_t running = 1;
 
 void handle_sigint(int) {
-    running = false;
+    running = 0;
 }
 
 struct Options {
@@ -101,7 +100,7 @@ int main(int argc, char* argv[]) {
         std::cout << "Baseline collected. First report in " << opts.interval.count()
                   << " ms.\n";
 
-        while (running) {
+        while (running != 0) {
             std::this_thread::sleep_for(opts.interval);
             if (!running) break;
 
